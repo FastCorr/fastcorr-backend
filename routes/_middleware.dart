@@ -4,17 +4,24 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:dart_frog/dart_frog.dart';
+import 'package:dotenv/dotenv.dart';
 import 'package:http/http.dart' as http;
 
 import '../middleware/firestore.dart';
+import '../services/paystack_service.dart';
+import '../services/recipient_cache.dart';
 
+final env = DotEnv()..load();
+final paystackService = PaystackService(env['PAYSTACK_SECRET_KEY']!);
+final recipientCache = RecipientCache();
 
 Handler middleware(Handler handler) {
   return handler
-  .use(corsMiddleware)
-    .use(firestoreInit());
+      .use(corsMiddleware)
+      .use(firestoreInit())
+      .use(provider<PaystackService>((_) => paystackService))
+      .use(provider<RecipientCache>((_) => recipientCache));
 }
-
 
 Middleware corsMiddleware = (handler) {
   return (context) async {
@@ -67,7 +74,6 @@ Middleware authMiddleware() {
     };
   };
 }
-
 
 Future<String?> verifyFirebaseToken(String token) async {
   const apiKey = 'AIzaSyCYv1kVvV_ftmx0gNqMrLjLnpG7gCCpUow';

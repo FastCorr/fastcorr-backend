@@ -10,9 +10,14 @@ import 'package:http/http.dart' as http;
 Future<Response> onRequest(RequestContext context) async {
   if (context.request.method == HttpMethod.post) {
     final body = await context.request.json();
-    final partyAddresses = body['partyAddresses'] as List<String>;
+    final fetchedAddresses = body['partyAddresses'] as List<dynamic>;
     final city = body['city'] as String;
 
+    final partyAddresses = <String>[];
+    for (final address in fetchedAddresses) {
+      partyAddresses.add(address as String);
+    }
+    
     try {
       final price = await _calculateDistanceFee(
         city,
@@ -35,67 +40,73 @@ Future<double> _calculateDistanceFee(
   String city,
   List<String> partyAddresses,
 ) async {
-  final pricingDoc =
-      await Firestore.instance.collection('pricing')
-      .document('9XlHdo2ME5tjyKKuHdSE').get();
+  final pricingDoc = await Firestore.instance
+      .collection('pricing')
+      .document('9XlHdo2ME5tjyKKuHdSE')
+      .get();
   final pricePerKm = pricingDoc.map['pricePerKm'] as double;
 
   final officeDoc = await _getOfficeByCity(city);
- 
+
   double totalDistanceFee = 0;
   for (final address in partyAddresses) {
     try {
-
-      final distance = await _calculateDistance(officeDoc.map['address'] as String, address,);
+      final distance = await _calculateDistance(
+        officeDoc.map['address'] as String,
+        address,
+      );
       if (distance > 15000) {
         // 15km in meters
         totalDistanceFee += (distance - 15000) / 1000 * pricePerKm;
       }
     } catch (e) {
       log('Geocoding error for address "$address": $e');
-      rethrow;
+      throw Exception('Geocoding error for address "$address": $e');
     }
   }
   return totalDistanceFee;
 }
 
 Future<double> _calculateDistance(
-    String originAddress, String destinationAddress) async {
-  const apiKey = 'AIzaSyDFwGUREhbc3YZS0uvVkR5At_CK5hnINxM'; // Replace with your actual API key
+  String originAddress,
+  String destinationAddress,
+) async {
+  const apiKey = 'AIzaSyDFwGUREhbc3YZS0uvVkR5At_CK5hnINxM';
   final url = Uri.parse(
     'https://maps.googleapis.com/maps/api/distancematrix/json?'
     'origins=${Uri.encodeComponent(originAddress)}&'
     'destinations=${Uri.encodeComponent(destinationAddress)}&'
     'key=$apiKey',
   );
+  try {
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
 
-  final response = await http.get(url);
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-
-    
-    if (data['rows'] != null &&
-        data['rows'][0]['elements'] != null &&
-        data['rows'][0]['elements'][0]['status'] == 'OK') {
-      final distance =
-          data['rows'][0]['elements'][0]['distance']['value'] as int;
-      return distance.toDouble();
-    } else {
-      
-      var errorMessage = 'Distance calculation failed. ';
-      if (data['rows'] == null || data['rows'] == null) {
-        errorMessage += 'Rows data missing or empty.';
-      } else if (data['rows'][0]['elements'] == null ||
-          data['rows'][0]['elements'] == null) {
-        errorMessage += 'Elements data missing or empty.';
+      if (data['rows'] != null &&
+          data['rows'][0]['elements'] != null &&
+          data['rows'][0]['elements'][0]['status'] == 'OK') {
+        final distance =
+            data['rows'][0]['elements'][0]['distance']['value'] as int;
+        return distance.toDouble();
       } else {
-        errorMessage += 'Status: ${data['rows'][0]['elements'][0]['status']}';
-      }
+        var errorMessage = 'Distance calculation failed. ';
+        if (data['rows'] == null || data['rows'] == null) {
+          errorMessage += 'Rows data missing or empty.';
+        } else if (data['rows'][0]['elements'] == null ||
+            data['rows'][0]['elements'] == null) {
+          errorMessage += 'Elements data missing or empty.';
+        } else {
+          errorMessage += 'Status: ${data['rows'][0]['elements'][0]['status']}';
+        }
 
-      throw Exception(errorMessage);
+        throw Exception(errorMessage);
+      }
+    } else {
+      throw Exception('Failed to load distance: ${response.statusCode}');
     }
-  } else {
-    throw Exception('Failed to load distance: ${response.statusCode}');
+  } catch (e) {
+    throw Exception('Something went wrong calculating distance: $e');
   }
 }
 

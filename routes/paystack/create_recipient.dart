@@ -34,10 +34,10 @@ final body = await context.request.json();
 
     return Response.json(body: result);
 
-  }catch (e){
+  }catch (e, s){
     return Response.json(
       statusCode: 500,
-      body: {'error': 'Failed to create recipient: $e'},
+      body: {'error': 'Failed to create recipient: $e : Stacktrace: $s'},
     );
   }
   

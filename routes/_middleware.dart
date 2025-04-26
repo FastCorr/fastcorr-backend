@@ -13,6 +13,7 @@ import '../services/recipient_cache.dart';
 
 final env = DotEnv()..load();
 final paystackService = PaystackService(env['PAYSTACK_SECRET_KEY']!);
+final apiKey = env['GOOGLE_API_KEY'] ?? '';
 final recipientCache = RecipientCache();
 
 Handler middleware(Handler handler) {
@@ -76,7 +77,6 @@ Middleware authMiddleware() {
 }
 
 Future<String?> verifyFirebaseToken(String token) async {
-  const apiKey = 'AIzaSyCYv1kVvV_ftmx0gNqMrLjLnpG7gCCpUow';
   final url = Uri.parse(
     'https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=$apiKey',
   );

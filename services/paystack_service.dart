@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class PaystackService {
-  final String secretKey;
 
   PaystackService(this.secretKey);
+  final String secretKey;
 
   Future<Map<String, dynamic>> createRecipient({
     required String name,

@@ -4,16 +4,14 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:dotenv/dotenv.dart';
 import 'package:http/http.dart' as http;
 
 import '../middleware/firestore.dart';
-import '../services/paystack_service.dart';
-import '../services/recipient_cache.dart';
+import '../services/services.dart';
 
-final env = DotEnv()..load();
-final paystackService = PaystackService(env['PAYSTACK_SECRET_KEY']!);
-final apiKey = env['GOOGLE_API_KEY'] ?? '';
+final paystackKey = EnvConfig.paystackSecretKey;
+final paystackService = PaystackService(paystackKey);
+final apiKey = EnvConfig.googleAPIKey;
 final recipientCache = RecipientCache();
 
 Handler middleware(Handler handler) {

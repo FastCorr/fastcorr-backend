@@ -5,11 +5,9 @@ Future<Response> onRequest(RequestContext context) async {
   if (context.request.method != HttpMethod.post) {
     return Response(statusCode: 405, body: 'Method Not Allowed');
   }
- 
 
   try {
-     final body = await context.request.json();
-  
+    final body = await context.request.json();
 
     final paystack = context.read<PaystackService>();
 
@@ -19,11 +17,14 @@ Future<Response> onRequest(RequestContext context) async {
       reason: body['reason'] as String,
     );
 
-    return Response.json(body: result);
-  } catch (e) {
+
+    return Response.json(
+      body: result,
+    );
+  } catch (e, s) {
     return Response.json(
       statusCode: 500,
-      body: {'error': 'Failed to initiate transfer: $e'},
+      body: {'error': 'Failed to initiate transfer: $e stack trace: $s'},
     );
   }
 }

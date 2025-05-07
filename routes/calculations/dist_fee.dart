@@ -7,6 +7,10 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:firedart/firedart.dart';
 import 'package:http/http.dart' as http;
 
+import '../../services/services.dart';
+
+final String _apiKey = EnvConfig.googleAPIKey;
+
 Future<Response> onRequest(RequestContext context) async {
   if (context.request.method == HttpMethod.post) {
     final body = await context.request.json();
@@ -71,12 +75,11 @@ Future<double> _calculateDistance(
   String originAddress,
   String destinationAddress,
 ) async {
-  const apiKey = 'AIzaSyDFwGUREhbc3YZS0uvVkR5At_CK5hnINxM';
   final url = Uri.parse(
     'https://maps.googleapis.com/maps/api/distancematrix/json?'
     'origins=${Uri.encodeComponent(originAddress)}&'
     'destinations=${Uri.encodeComponent(destinationAddress)}&'
-    'key=$apiKey',
+    'key=$_apiKey',
   );
   try {
     final response = await http.get(url);
@@ -122,9 +125,8 @@ Future<Document> _getOfficeByCity(String city) async {
 }
 
 // Future<Map<String, double>> _geocodeAddress(String address) async {
-//   const apiKey = 'AIzaSyDFwGUREhbc3YZS0uvVkR5At_CK5hnINxM';
 //   final url = Uri.parse(
-//     'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKey',
+//     'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$_apiKey',
 //   );
 
 //   final response = await http.get(url);

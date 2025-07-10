@@ -33,4 +33,13 @@ class FirestoreService {
     }
   }
 
+  Future<void> uploadDriverLocation(GeoPoint geopoint, String driverId) async {
+    try {
+      await _drivers.document(driverId).update({
+        'currentLocation': geopoint,
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
